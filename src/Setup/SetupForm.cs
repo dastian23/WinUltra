@@ -1,71 +1,11 @@
-// WinUltra's setup window and shortcuts (compiled with /define:FRIENDS, which Build.cmd sets).
-// Everything WinUltra does is the person's choice: a setup window on first run explains each part
-// and lets them switch it on or off, and the same window opens again from the tray icon.
-// The exe runs from wherever it is kept; it never copies itself anywhere.
-
 #if FRIENDS
 using System;
 using System.Drawing;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
 using System.Windows.Forms;
 
 namespace WinUltra
 {
-    // Windows' standard shortcut (.lnk) maker.
-    static class Shortcut
-    {
-        [ComImport, Guid("00021401-0000-0000-C000-000000000046")] class ShellLink { }
-
-        [ComImport, InterfaceType(ComInterfaceType.InterfaceIsIUnknown), Guid("000214F9-0000-0000-C000-000000000046")]
-        interface IShellLinkW
-        {
-            void GetPath([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder file, int size, IntPtr data, int flags);
-            void GetIDList(out IntPtr list);
-            void SetIDList(IntPtr list);
-            void GetDescription([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder name, int size);
-            void SetDescription([MarshalAs(UnmanagedType.LPWStr)] string name);
-            void GetWorkingDirectory([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder dir, int size);
-            void SetWorkingDirectory([MarshalAs(UnmanagedType.LPWStr)] string dir);
-            void GetArguments([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder args, int size);
-            void SetArguments([MarshalAs(UnmanagedType.LPWStr)] string args);
-            void GetHotkey(out short key);
-            void SetHotkey(short key);
-            void GetShowCmd(out int show);
-            void SetShowCmd(int show);
-            void GetIconLocation([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder path, int size, out int icon);
-            void SetIconLocation([MarshalAs(UnmanagedType.LPWStr)] string path, int icon);
-            void SetRelativePath([MarshalAs(UnmanagedType.LPWStr)] string path, int reserved);
-            void Resolve(IntPtr hwnd, int flags);
-            void SetPath([MarshalAs(UnmanagedType.LPWStr)] string file);
-        }
-
-        public static string StartupLink { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Startup), "WinUltra.lnk"); } }
-        public static string DesktopLink { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "WinUltra.lnk"); } }
-
-        public static void Make(string link, string target)
-        {
-            try
-            {
-                var shell = (IShellLinkW)new ShellLink();
-                shell.SetPath(target);
-                shell.SetWorkingDirectory(Path.GetDirectoryName(target));
-                shell.SetIconLocation(target, 0);
-                shell.SetDescription("WinUltra");
-                ((IPersistFile)shell).Save(link, true);
-                Marshal.FinalReleaseComObject(shell);
-            }
-            catch (Exception ex) { Store.Log("shortcut: " + ex.Message); }
-        }
-
-        public static void Remove(string link)
-        {
-            try { if (File.Exists(link)) File.Delete(link); } catch (Exception) { }
-        }
-    }
-
     // The setup window: what WinUltra does, and a switch for each part.
     class SetupForm : Form
     {
@@ -97,8 +37,9 @@ namespace WinUltra
                 + "Everything stays on this PC: WinUltra never connects to the internet."));
 
             flow.Controls.Add(Heading("Starting up"));
-            startup = Box("Start WinUltra when I sign in", "Adds a shortcut to your Start-up folder.", App.StartsWithWindows || firstRun, flow);
-            desktop = Box("Put a shortcut on my desktop", null, File.Exists(Shortcut.DesktopLink) || firstRun, flow);
+            // Both are opt-in on first run; later runs show the choices already made.
+            startup = Box("Start WinUltra when I sign in", "Adds a shortcut to your Start-up folder.", App.StartsWithWindows, flow);
+            desktop = Box("Put a shortcut on my desktop", null, File.Exists(Shortcut.DesktopLink), flow);
             string folder = Path.GetDirectoryName(App.ExePath).ToLowerInvariant();
             if (folder.Contains(@"\downloads") || folder.Contains(@"\temp"))
                 flow.Controls.Add(Note("Tip: the shortcuts point to where WinUltra.exe is now (" + Path.GetDirectoryName(App.ExePath)

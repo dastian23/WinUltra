@@ -8,6 +8,7 @@ island-data/
 *.log
 
 # Editor and OS clutter
+.idea/
 *.tmp
 Thumbs.db
 desktop.ini
