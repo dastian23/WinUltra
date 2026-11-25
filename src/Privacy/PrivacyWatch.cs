@@ -34,7 +34,7 @@ partial class PrivacyWatch
     const string Root = @"Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\";
     readonly List<RegistryKey> keys = new List<RegistryKey>();
     readonly List<AutoResetEvent> events = new List<AutoResetEvent>();
-    public event Action Changed;
+    public static event Action Changed;
 
     public void Start()
     {
@@ -54,12 +54,20 @@ partial class PrivacyWatch
             }, null, -1, false);
         }
         StartCameraMonitor();
+        StartMicrophoneMonitor();
     }
 
     // Names, values and subkeys anywhere below; REG_NOTIFY_THREAD_AGNOSTIC so any thread can re-arm it.
     static void Arm(RegistryKey key, AutoResetEvent ev)
     {
         RegNotifyChangeKeyValue(key.Handle.DangerousGetHandle(), true, 0x1 | 0x4 | 0x10000000, ev.SafeWaitHandle.DangerousGetHandle(), true);
+    }
+
+    public class PrivacyApp
+    {
+        public readonly string Name, Key;
+        public PrivacyApp(string name, string key) { Name = name; Key = key; }
+        public override string ToString() { return Name; }
     }
 
     static string ProcessLabel(uint pid)
@@ -73,7 +81,12 @@ partial class PrivacyWatch
     }
     public static List<string> InUse(string capability)
     {
-        var list = new List<string>();
+        return InUseApps(capability).Select(a => a.Name).ToList();
+    }
+
+    public static List<PrivacyApp> InUseApps(string capability)
+    {
+        var list = new List<PrivacyApp>();
         try
         {
             using (var key = Registry.CurrentUser.OpenSubKey(Root + capability))
@@ -87,7 +100,7 @@ partial class PrivacyWatch
         return list;
     }
 
-    static void Scan(RegistryKey key, List<string> list, bool desktopApp)
+    static void Scan(RegistryKey key, List<PrivacyApp> list, bool desktopApp)
     {
         foreach (var name in key.GetSubKeyNames())
         {
@@ -96,7 +109,11 @@ partial class PrivacyWatch
             {
                 if (app == null) continue;
                 object start = app.GetValue("LastUsedTimeStart"), stop = app.GetValue("LastUsedTimeStop");
-                if (start is long && (long)start != 0 && stop is long && (long)stop == 0) list.Add(Pretty(name, desktopApp));
+                if (start is long && (long)start != 0 && stop is long && (long)stop == 0)
+                {
+                    string keyPath = desktopApp ? name.Replace('#', '\\') : name;
+                    list.Add(new PrivacyApp(Pretty(name, desktopApp), keyPath));
+                }
             }
         }
     }
@@ -115,6 +132,8 @@ partial class PrivacyWatch
         events.Clear();
         foreach (var k in keys) k.Dispose();
         keys.Clear();
+        StopMicrophoneMonitor();
+        ReleaseMicMeter();
         if (mfStarted) { try { MFShutdown(); } catch (Exception) { } mfStarted = false; }
     }
 

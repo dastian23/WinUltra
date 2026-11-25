@@ -31,7 +31,7 @@ using RadioState = Windows.Devices.Radios.RadioState;
 partial class Island : Window
 {
     // Sizes are in WPF units; WPF scales them for the monitor's DPI.
-    const double LineW = 124, LineH = 6, PillW = 236, PillH = 34, PopW = 340, PopH = 44, NoteW = 392, NoteH = 62;
+    const double IdlePillW = 240, PillW = 360, PillH = 34, PopW = 340, PopH = 44, NoteW = 392, NoteH = 62;
     const double ExpW = 520, ExpH = 262, WinW = 580, Gap = 5, SmallWinH = 84, BigWinH = ExpH + 40;
     const int TabMedia = 0, TabControls = 1, TabStats = 2, TabClipboard = 3, TabShelf = 4, TabTimer = 5, TabCount = 6;
     // Build.cmd makes three files that differ only in this number: WinUltra.exe (120 fps, the standard
@@ -69,18 +69,22 @@ partial class Island : Window
     readonly RectangleGeometry clip = new RectangleGeometry();
     readonly Grid collapsedLayer = new Grid(), popupLayer = new Grid(), expandedLayer = new Grid();
     bool built;
-    DispatcherTimer hoverTimer, leaveTimer, popupTimer, pollTimer, tickTimer, trimTimer, clipTimer, noteTimer, tabHoverTimer;
-    int tabHoverTarget = -1;
+    DispatcherTimer hoverTimer, leaveTimer, popupTimer, pollTimer, tickTimer, trimTimer, clipTimer, noteTimer, clockTimer, micLevelTimer;
+    int hoveredTab = -1, lastSelectedTab = -1, clockMinute = -1;
     System.Threading.Timer sensorTimer;
-    bool pinnedOpen, dragInside, draggingOut, hidden, lineMode = true;
+    bool pinnedOpen, dragInside, draggingOut, hidden, lastPillActive;
     DateTime pinnedAt, forceShowUntil, ignoreClipUntil;
     int clipAttempts;
 
     // collapsed status
     readonly Border pillArt = new Border { Width = 22, Height = 22, CornerRadius = new CornerRadius(6) };
+    readonly Grid pillLeft = new Grid { Width = 24, Height = 24, VerticalAlignment = VerticalAlignment.Center };
     readonly TextBlock pillIcon = UI.Icon("", 12.8, UI.Fg);
     readonly TextBlock pillText = UI.Text("", 14, UI.Fg, FontWeights.SemiBold);
     readonly StackPanel pillBars = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+    readonly StackPanel pillMicBars = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) };
+    readonly float[] micHistory = new float[5];
+    float micLevel;
     bool barsRunning;
 
     // tabs
@@ -111,26 +115,34 @@ partial class Island : Window
     MediaSession session;
     bool playing;
     string mediaKey, title, artist, appName;
-    ImageSource artwork;
+    string mediaAppId;
+    ImageSource artwork, mediaAppIcon;
     Color tint = Color.FromRgb(0x4A, 0x6C, 0xFF);
     int mediaVersion;
     Windows.Foundation.TypedEventHandler<MediaSession, Windows.Media.Control.MediaPropertiesChangedEventArgs> propsHandler;
     Windows.Foundation.TypedEventHandler<MediaSession, Windows.Media.Control.PlaybackInfoChangedEventArgs> playbackHandler;
+    Windows.Foundation.TypedEventHandler<MediaManager, Windows.Media.Control.CurrentSessionChangedEventArgs> mediaCurrentSessionChangedHandler;
+    Windows.Foundation.TypedEventHandler<MediaManager, Windows.Media.Control.SessionsChangedEventArgs> mediaSessionsChangedHandler;
 
     // controls
     readonly Volume volume = new Volume();
 
     // camera and microphone dot
     readonly PrivacyWatch privacy = new PrivacyWatch();
-    readonly System.Windows.Shapes.Ellipse privacyDot = new System.Windows.Shapes.Ellipse { Width = 11, Height = 11, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Top, IsHitTestVisible = false, Visibility = Visibility.Collapsed };
+    readonly System.Windows.Shapes.Ellipse privacyDot = new System.Windows.Shapes.Ellipse { Width = 12, Height = 12, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Top, IsHitTestVisible = false, Visibility = Visibility.Collapsed, RenderTransformOrigin = new Point(0.5, 0.5) };
     readonly TranslateTransform privacyShift = new TranslateTransform();
-    // A soft glow around the dot, so it stands out next to the bright line (camera green, microphone orange).
-    readonly System.Windows.Media.Effects.DropShadowEffect privacyGlow = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 14, ShadowDepth = 0, Opacity = 0.95, Color = Color.FromRgb(0x30, 0xD1, 0x58) };
+    readonly ScaleTransform privacyPulse = new ScaleTransform(1, 1);
+    readonly TransformGroup privacyTransform = new TransformGroup();
     bool privacyPulsing;
     List<string> camApps = new List<string>(), micApps = new List<string>();
+    string micAppIconKey;
+    ImageSource micAppIcon;
     TextBlock privacyLabel;
-    DispatcherTimer privacyTimer, privacyPollTimer;
+    DispatcherTimer privacyTimer;
     bool privacyBusy;
+    Action privacyChangedHandler;
+    Action<float, bool, bool> volumeChangedHandler;
+    Action volumeDefaultDeviceChangedHandler;
 
     // Bluetooth connect pop-ups
     const string BatteryKey = "{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2";
@@ -180,6 +192,7 @@ partial class Island : Window
     StackPanel shelfList;
     Point dragStart;
     ShelfItem dragCandidate;
+    int dragPreviousTab = -1;
 
     // timer and stopwatch
     bool timerRunning, timerPaused;

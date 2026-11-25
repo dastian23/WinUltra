@@ -57,13 +57,18 @@ partial class Island
         dragInside = true;
         leaveTimer.Stop();
         if (mode != Mode.Expanded) Expand(false);
-        if (tab != TabShelf) SelectTab(TabShelf);
+        if (tab != TabShelf)
+        {
+            if (dragPreviousTab < 0) dragPreviousTab = tab;
+            SelectTab(TabShelf);
+        }
     }
 
     void OnDrop(object sender, DragEventArgs e)
     {
         e.Handled = true;
         dragInside = false;
+        dragPreviousTab = -1;
         if (draggingOut) { e.Effects = DragDropEffects.None; return; }
         var paths = e.Data.GetData(DataFormats.FileDrop) as string[];
         if (paths == null) { e.Effects = DragDropEffects.None; return; }
@@ -80,22 +85,7 @@ partial class Island
 
     static ImageSource FileIcon(string path)
     {
-        try
-        {
-            IntPtr icon = Native.LargeIcon(path);
-            if (icon == IntPtr.Zero)
-            {
-                var info = new Native.SHFILEINFO();
-                Native.SHGetFileInfo(path, 0, ref info, (uint)Marshal.SizeOf(info), 0x100);    // SHGFI_ICON, large
-                icon = info.hIcon;
-            }
-            if (icon == IntPtr.Zero) return null;
-            var src = Imaging.CreateBitmapSourceFromHIcon(icon, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
-            Native.DestroyIcon(icon);
-            src.Freeze();
-            return src;
-        }
-        catch (Exception) { return null; }
+        return AppIcons.For(path);
     }
 
     void RenderShelf()

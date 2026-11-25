@@ -73,12 +73,13 @@ partial class Island
 #else
         InitNotifications();
 #endif
-        volume.Changed += (level, muted, external) => Ui(delegate { OnVolumeChanged(level, muted, external); });
-        volume.DefaultDeviceChanged += () => Ui(delegate { volume.Init(); });
+        volumeChangedHandler = (level, muted, external) => Ui(delegate { OnVolumeChanged(level, muted, external); });
+        volume.DefaultDeviceChanged += volumeDefaultDeviceChangedHandler = () => Ui(delegate { volume.Init(); PrivacyWatch.ReleaseMicMeter(); });
+        volume.Changed += volumeChangedHandler;
         volume.Init();
         pollTimer.Start();
         ApplyCollapsed(false);
-        try { privacy.Changed += () => Ui(delegate { privacyTimer.Stop(); privacyTimer.Start(); }); privacy.Start(); UpdatePrivacy(); }
+        try { privacyChangedHandler = () => Ui(delegate { privacyTimer.Stop(); privacyTimer.Start(); }); PrivacyWatch.Changed += privacyChangedHandler; privacy.Start(); UpdatePrivacy(); }
         catch (Exception ex) { Store.Log("privacy: " + ex.Message); }
         InitBluetoothWatch();
         InitBrightnessWatch();
@@ -148,7 +149,19 @@ partial class Island
             if (displayHandler != null) SystemEvents.DisplaySettingsChanged -= displayHandler;
             if (powerHandler != null) SystemEvents.PowerModeChanged -= powerHandler;
             if (batteryHandler != null) { try { Windows.Devices.Power.Battery.AggregateBattery.ReportUpdated -= batteryHandler; } catch (Exception) { } }
-            if (privacyPollTimer != null) privacyPollTimer.Stop();
+            foreach (var t in new[] { hoverTimer, leaveTimer, popupTimer, pollTimer, tickTimer, trimTimer, clipTimer, noteTimer, privacyTimer, clockTimer, micLevelTimer })
+                if (t != null) t.Stop();
+            if (volumeChangedHandler != null) volume.Changed -= volumeChangedHandler;
+            if (volumeDefaultDeviceChangedHandler != null) volume.DefaultDeviceChanged -= volumeDefaultDeviceChangedHandler;
+            if (privacyChangedHandler != null) PrivacyWatch.Changed -= privacyChangedHandler;
+            if (mediaCurrentSessionChangedHandler != null && mediaManager != null) mediaManager.CurrentSessionChanged -= mediaCurrentSessionChangedHandler;
+            if (mediaSessionsChangedHandler != null && mediaManager != null) mediaManager.SessionsChanged -= mediaSessionsChangedHandler;
+            if (session != null)
+            {
+                try { session.MediaPropertiesChanged -= propsHandler; } catch (Exception) { }
+                try { session.PlaybackInfoChanged -= playbackHandler; } catch (Exception) { }
+                session = null;
+            }
             if (sensorTimer != null) { sensorTimer.Dispose(); sensorTimer = null; }
             privacy.Dispose();
             lock (sensorGate) sensors.Dispose();

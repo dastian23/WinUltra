@@ -40,52 +40,71 @@ partial class Island
         ThreadPool.QueueUserWorkItem(delegate
         {
             var cam = new List<string>();
-            var mic = new List<string>();
+            var mic = new List<PrivacyWatch.PrivacyApp>();
             try
             {
                 cam = PrivacyWatch.InUse("webcam").Concat(PrivacyWatch.LiveCamera()).Distinct().ToList();
-                mic = PrivacyWatch.InUse("microphone").Concat(PrivacyWatch.LiveMicrophone()).Distinct().ToList();
+                mic = PrivacyWatch.InUseApps("microphone").Concat(PrivacyWatch.LiveMicrophoneApps())
+                    .GroupBy(a => a.Name).Select(g => g.First()).ToList();
             }
             catch (Exception ex) { Store.Log("privacy: " + ex.Message); }
             Ui(delegate { privacyBusy = false; ApplyPrivacy(cam, mic); });
         });
     }
 
-    void ApplyPrivacy(List<string> cam, List<string> mic)
+    void ApplyPrivacy(List<string> cam, List<PrivacyWatch.PrivacyApp> mic)
     {
         string started = cam.FirstOrDefault(a => !camApps.Contains(a));
         bool camStarted = started != null;
-        if (started == null) started = mic.FirstOrDefault(a => !micApps.Contains(a));
+        if (started == null) started = mic.Select(a => a.Name).FirstOrDefault(a => !micApps.Contains(a));
         camApps = cam;
-        micApps = mic;
+        micApps = mic.Select(a => a.Name).Distinct().ToList();
         bool any = cam.Count > 0 || mic.Count > 0;
-        // Green for the camera, orange for the microphone alone, as on the iPhone.
-        privacyDot.Fill = cam.Count > 0 ? UI.Green : UI.Orange;
-        privacyGlow.Color = cam.Count > 0 ? Color.FromRgb(0x30, 0xD1, 0x58) : Color.FromRgb(0xFF, 0x9F, 0x0A);
+        string micKey = mic.Count > 0 ? mic[0].Key : null;
+        if (micKey != micAppIconKey)
+        {
+            micAppIconKey = micKey;
+            micAppIcon = AppIcons.For(micKey);
+        }
+        // Both indicators are green, as on the iPhone.
+        privacyDot.Fill = UI.Green;
         privacyDot.Visibility = any ? Visibility.Visible : Visibility.Collapsed;
         if (any && !privacyPulsing)
         {
-            var pulse = new DoubleAnimation(1, 0.45, TimeSpan.FromSeconds(0.9)) { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever, EasingFunction = new SineEase() };
+            var pulse = new DoubleAnimation(1, 1.18, TimeSpan.FromSeconds(0.9)) { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever, EasingFunction = new SineEase() };
             Timeline.SetDesiredFrameRate(pulse, 20);
-            privacyDot.BeginAnimation(UIElement.OpacityProperty, pulse);
+            privacyPulse.BeginAnimation(ScaleTransform.ScaleXProperty, pulse);
+            privacyPulse.BeginAnimation(ScaleTransform.ScaleYProperty, pulse);
             privacyPulsing = true;
         }
         else if (!any && privacyPulsing)
         {
-            privacyDot.BeginAnimation(UIElement.OpacityProperty, null);    // stops the pulse, so nothing redraws while idle
+            privacyPulse.BeginAnimation(ScaleTransform.ScaleXProperty, null);    // stops the pulse, so nothing redraws while idle
+            privacyPulse.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            privacyPulse.ScaleX = privacyPulse.ScaleY = 1;
             privacyPulsing = false;
         }
         if (privacyLabel != null)
         {
-            privacyLabel.Text = any ? "● " + string.Join(", ", cam.Concat(mic).Distinct()) : "";
-            privacyLabel.Foreground = cam.Count > 0 ? UI.Green : UI.Orange;
+            privacyLabel.Text = any ? "● " + string.Join(", ", cam.Concat(micApps).Distinct()) : "";
+            privacyLabel.Foreground = UI.Green;
         }
         if (started != null)
         {
-            var p = camStarted ? MakePopup("", UI.Green, "Camera in use", false) : MakePopup("", UI.Orange, "Microphone in use", false);
+            var p = camStarted ? MakePopup("", UI.Green, "Camera in use", false) : MakePopup("", UI.Green, "Microphone in use", false);
             p.Value.Text = started;
             ShowPopup(p.Root, PopW, PopH, 2600, false);
         }
+        if (micApps.Count > 0)
+        {
+            if (!micLevelTimer.IsEnabled) micLevelTimer.Start();
+        }
+        else
+        {
+            micLevelTimer.Stop();
+            ResetMicLevel();
+        }
+        UpdateCollapsed();
     }
 
     void InitBluetoothWatch()

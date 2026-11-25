@@ -39,7 +39,10 @@ partial class Island
             mediaManager = await MediaManager.RequestAsync();
             propsHandler = (s, a) => Ui(RefreshMedia);
             playbackHandler = (s, a) => Ui(RefreshMedia);
-            mediaManager.CurrentSessionChanged += (s, a) => Ui(HookSession);
+            mediaCurrentSessionChangedHandler = (s, a) => Ui(HookSession);
+            mediaSessionsChangedHandler = (s, a) => Ui(HookSession);
+            mediaManager.CurrentSessionChanged += mediaCurrentSessionChangedHandler;
+            mediaManager.SessionsChanged += mediaSessionsChangedHandler;
             HookSession();
         }
         catch (Exception ex) { Store.Log("media: " + ex.Message); }
@@ -96,7 +99,7 @@ partial class Island
     {
         int version = ++mediaVersion;
         var s = session;
-        string newTitle = null, newArtist = null;
+        string newTitle = null, newArtist = null, newAppId = null;
         bool isPlaying = false;
         ImageSource art = artwork;
         try
@@ -133,12 +136,18 @@ partial class Island
                     try { SetTint(art != null ? AverageColor((BitmapSource)art) : Color.FromRgb(0x4A, 0x6C, 0xFF)); } catch (Exception) { }
                 }
                 appName = PrettyApp(s.SourceAppUserModelId);
+                newAppId = s.SourceAppUserModelId;
             }
         }
         catch (Exception ex) { Store.Log("media read: " + ex.Message); }
         if (version != mediaVersion) return;
 
-        if (s == null || string.IsNullOrEmpty(newTitle)) { newTitle = null; newArtist = null; art = null; mediaKey = null; isPlaying = false; appName = null; }
+        if (s == null || string.IsNullOrEmpty(newTitle)) { newTitle = null; newArtist = null; art = null; mediaKey = null; isPlaying = false; appName = null; newAppId = null; }
+        if (newAppId != mediaAppId)
+        {
+            mediaAppId = newAppId;
+            mediaAppIcon = AppIcons.For(newAppId);
+        }
         artwork = art;
         playing = isPlaying;
         title = newTitle;

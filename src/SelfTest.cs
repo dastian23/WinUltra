@@ -146,7 +146,7 @@ static class SelfTest
         {
             var pw = new PrivacyWatch();
             bool reported = false;
-            pw.Changed += () => reported = true;
+            PrivacyWatch.Changed += () => reported = true;
             pw.Start();
             Thread.Sleep(1500);
             Func<List<string>, string> show = l => l.Count == 0 ? "none" : string.Join(", ", l);

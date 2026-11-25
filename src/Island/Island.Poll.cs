@@ -56,7 +56,7 @@ partial class Island
             hidden = false;
             Show();
             Native.SetWindowPos(hwnd, new IntPtr(-1), 0, 0, 0, 0, 0x13);    // HWND_TOPMOST, no move/size/activate
-            if (mode == Mode.Collapsed && playing && !lineMode && !timerRunning && !stopwatch.IsRunning) StartBars();
+            if (mode == Mode.Collapsed && playing && !timerRunning && !stopwatch.IsRunning) StartBars();
         }
 
         if (pinnedOpen && mode == Mode.Expanded && (DateTime.Now - pinnedAt).TotalSeconds > 12 && !CursorOverIsland())

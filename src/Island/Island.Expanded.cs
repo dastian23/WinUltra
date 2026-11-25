@@ -57,17 +57,10 @@ partial class Island
             tabLabels[i] = UI.Text(names[i], 12.5, UI.Fg, FontWeights.SemiBold);
             tabLabels[i].Margin = new Thickness(7, 0, 0, 0);
             content.Children.Add(tabLabels[i]);
-            tabButtons[i] = UI.Button(content, 0, 28, 14, Brushes.Transparent, delegate { SelectTab(index); });
+            tabButtons[i] = UI.Button(content, 0, 28, 14, Brushes.Transparent, delegate { SelectTab(index, true); });
             tabButtons[i].Margin = new Thickness(0, 0, 2, 0);
-            // Resting the mouse on a tab for a moment opens it; no click needed.
-            tabButtons[i].MouseEnter += delegate
-            {
-                tabHoverTimer.Stop();
-                if (index == tab) return;
-                tabHoverTarget = index;
-                tabHoverTimer.Start();
-            };
-            tabButtons[i].MouseLeave += delegate { if (tabHoverTarget == index) tabHoverTimer.Stop(); };
+            tabButtons[i].MouseEnter += delegate { hoveredTab = index; UpdateTabVisuals(); };
+            tabButtons[i].MouseLeave += delegate { if (hoveredTab == index) { hoveredTab = -1; UpdateTabVisuals(); } };
             tabs.Children.Add(tabButtons[i]);
         }
         bar.Children.Add(UI.At(tabs, 0));
@@ -95,23 +88,17 @@ partial class Island
         }
         panel.Children.Add(UI.Row(host, 1));
         expandedLayer.Children.Add(panel);
-        SelectTab(playing ? TabMedia : TabControls);
+        SelectTab(lastSelectedTab >= 0 ? lastSelectedTab : (playing ? TabMedia : TabControls));
         UpdateMediaUi();
     }
 
-    void SelectTab(int index)
+    void SelectTab(int index, bool remember = false)
     {
         if (!built) BuildExpanded();
         int from = tab;
         tab = index;
-        for (int i = 0; i < TabCount; i++)
-        {
-            tabButtons[i].Background = i == index ? UI.GlassFill(Color.FromRgb(0x8A, 0x8A, 0x9A), 0x40) : Brushes.Transparent;
-            tabButtons[i].BorderBrush = i == index ? UI.Specular : null;
-            tabButtons[i].BorderThickness = new Thickness(i == index ? 1 : 0);
-            tabLabels[i].Visibility = i == index ? Visibility.Visible : Visibility.Collapsed;
-            pages[i].Visibility = i == index ? Visibility.Visible : Visibility.Collapsed;
-        }
+        if (remember) lastSelectedTab = index;
+        UpdateTabVisuals();
         if (from != index)
         {
             // Slide in a little from the side the tab sits on, with a quick fade.
@@ -128,6 +115,21 @@ partial class Island
         if (index == TabMedia) UpdateProgress();
         UpdateSensors();
         UpdateTickRate();
+    }
+
+    // Hover only highlights a tab; the active page changes only on an explicit click.
+    void UpdateTabVisuals()
+    {
+        for (int i = 0; i < TabCount; i++)
+        {
+            bool selected = i == tab;
+            tabButtons[i].Background = selected ? UI.GlassFill(Color.FromRgb(0x8A, 0x8A, 0x9A), 0x40)
+                : (i == hoveredTab ? UI.Selected : Brushes.Transparent);
+            tabButtons[i].BorderBrush = selected ? UI.Specular : null;
+            tabButtons[i].BorderThickness = new Thickness(selected ? 1 : 0);
+            tabLabels[i].Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
+            pages[i].Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
+        }
     }
 
 }

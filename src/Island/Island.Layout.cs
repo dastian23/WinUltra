@@ -84,7 +84,7 @@ partial class Island
         rimOverlay.CornerRadius = new CornerRadius(Math.Max(0, r - 0.75));
         // The camera/mic dot rides just right of the island, like the iPhone's.
         privacyShift.X = w / 2 + 14;
-        privacyDot.Margin = new Thickness(0, Gap + h / 2 - 5.5, 0, 0);
+        privacyDot.Margin = new Thickness(0, Gap + h / 2 - 6, 0, 0);
     }
 
     // The solid base hides under the glass, unless frosted glass is switched off.

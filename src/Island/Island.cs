@@ -56,8 +56,8 @@ partial class Island
         island.HorizontalAlignment = HorizontalAlignment.Center;
         island.VerticalAlignment = VerticalAlignment.Top;
         island.Margin = new Thickness(0, Gap, 0, 0);
-        island.Width = LineW;
-        island.Height = LineH;
+        island.Width = IdlePillW;
+        island.Height = PillH;
         // The solid dark base is its own layer, faded out while the glass shows: painted as the
         // island's background it left a dark fringe round the anti-aliased edge of the glass.
         baseLayer.Background = new LinearGradientBrush(Color.FromRgb(0x1C, 0x1C, 0x24), Color.FromRgb(0x07, 0x07, 0x0A), 90);
@@ -99,6 +99,7 @@ partial class Island
         lineBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0xFF, 0x8F, 0xCF), 1));
         lineBrush.Freeze();
         lineGlow.Background = lineBrush;
+        lineGlow.Opacity = 0;
         lineGlow.IsHitTestVisible = false;
 
         var sheen = new Border { IsHitTestVisible = false, VerticalAlignment = VerticalAlignment.Top, Height = 60 };
@@ -124,8 +125,9 @@ partial class Island
         hitStrip.Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0));
         root.Children.Add(hitStrip);
         root.Children.Add(island);
-        privacyDot.RenderTransform = privacyShift;
-        privacyDot.Effect = privacyGlow;
+        privacyTransform.Children.Add(privacyPulse);
+        privacyTransform.Children.Add(privacyShift);
+        privacyDot.RenderTransform = privacyTransform;
         root.Children.Add(privacyDot);
         root.AllowDrop = true;
         Content = root;
@@ -139,9 +141,9 @@ partial class Island
         clipTimer = MakeTimer(90, delegate { clipTimer.Stop(); ReadClipboard(); });
         noteTimer = MakeTimer(3000, delegate { PollNotifications(); });
         privacyTimer = MakeTimer(300, delegate { privacyTimer.Stop(); UpdatePrivacy(); });
-        privacyPollTimer = MakeTimer(2000, delegate { UpdatePrivacy(); });    // microphone sessions
-        privacyPollTimer.Start();
-        tabHoverTimer = MakeTimer(140, delegate { tabHoverTimer.Stop(); if (mode == Mode.Expanded && tabHoverTarget >= 0) SelectTab(tabHoverTarget); });
+        clockTimer = MakeTimer(1000, delegate { UpdateClock(); });
+        clockTimer.Start();
+        micLevelTimer = MakeTimer(60, delegate { UpdateMicLevel(); });
 
         BuildCollapsed();
         foreach (var layer in new[] { collapsedLayer, popupLayer, expandedLayer })
@@ -166,7 +168,7 @@ partial class Island
         root.MouseLeftButtonUp += delegate { if (mode != Mode.Expanded) Expand(false); };
         root.DragEnter += OnDragOver;
         root.DragOver += OnDragOver;
-        root.DragLeave += delegate { dragInside = false; leaveTimer.Stop(); leaveTimer.Start(); };
+        root.DragLeave += delegate { dragInside = false; if (dragPreviousTab >= 0) { int previous = dragPreviousTab; dragPreviousTab = -1; if (tab == TabShelf) SelectTab(previous); } leaveTimer.Stop(); leaveTimer.Start(); };
         root.Drop += OnDrop;
 
         SourceInitialized += OnSourceInitialized;

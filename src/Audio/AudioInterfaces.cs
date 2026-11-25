@@ -60,6 +60,8 @@ interface IAudioSessionManager2
     [PreserveSig] int GetAudioSessionControl(IntPtr a, uint b, out IntPtr c);
     [PreserveSig] int GetSimpleAudioVolume(IntPtr a, uint b, out IntPtr c);
     [PreserveSig] int GetSessionEnumerator(out IAudioSessionEnumerator sessions);
+    [PreserveSig] int RegisterSessionNotification([MarshalAs(UnmanagedType.Interface)] IAudioSessionNotification notification);
+    [PreserveSig] int UnregisterSessionNotification([MarshalAs(UnmanagedType.Interface)] IAudioSessionNotification notification);
 }
 
 [ComImport, Guid("E2F5BB11-0570-40CA-ACDD-3AA01277DEE8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -67,6 +69,33 @@ interface IAudioSessionEnumerator
 {
     [PreserveSig] int GetCount(out int count);
     [PreserveSig] int GetSession(int index, [MarshalAs(UnmanagedType.IUnknown)] out object session);
+}
+
+[ComImport, Guid("641DD20B-4D41-49CC-ABA3-174B50038C85"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IAudioSessionNotification
+{
+    [PreserveSig] int OnSessionCreated([MarshalAs(UnmanagedType.IUnknown)] object newSession);
+}
+
+[ComImport, Guid("24918ACC-64B3-47C1-8CA9-74A66E9957A8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IAudioSessionEvents
+{
+    [PreserveSig] int OnDisplayNameChanged([MarshalAs(UnmanagedType.LPWStr)] string displayName, IntPtr eventContext);
+    [PreserveSig] int OnIconPathChanged([MarshalAs(UnmanagedType.LPWStr)] string iconPath, IntPtr eventContext);
+    [PreserveSig] int OnSimpleVolumeChanged(float volume, int mute, IntPtr eventContext);
+    [PreserveSig] int OnChannelVolumeChanged(uint channelCount, IntPtr newVolumes, uint channel, IntPtr eventContext);
+    [PreserveSig] int OnGroupingParamChanged(ref Guid groupingParam, IntPtr eventContext);
+    [PreserveSig] int OnStateChanged(int state);
+    [PreserveSig] int OnSessionDisconnected(int disconnectReason);
+}
+
+[ComImport, Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IAudioMeterInformation
+{
+    [PreserveSig] int GetPeakValue(out float peak);
+    [PreserveSig] int GetMeteringChannelCount(out int count);
+    [PreserveSig] int GetChannelsPeakValues(int count, [Out] float[] peaks);
+    [PreserveSig] int QueryHardwareSupport(out int mask);
 }
 
 [ComImport, Guid("bfb7ff88-7239-4fc9-8fa2-07c950be9c6d"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
