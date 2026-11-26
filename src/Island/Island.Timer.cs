@@ -37,7 +37,7 @@ partial class Island
         var page = UI.Columns(UI.Px(300), UI.Px(10), UI.Star);
 
         var t = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-        timerText = UI.Text("15:00", 34, UI.Fg, FontWeights.Light);
+        timerText = UI.Text("15:00", 34, expandedFg, FontWeights.Light);
         timerText.HorizontalAlignment = HorizontalAlignment.Center;
         timerText.FontFeatures();
         t.Children.Add(timerText);
@@ -45,29 +45,29 @@ partial class Island
         foreach (int m in new[] { 1, 5, 10, 25 })
         {
             int minutes = m;
-            presets.Children.Add(Pad(UI.Button(Centered(UI.Text(m + " min", 12, UI.Fg, FontWeights.SemiBold)), 56, 28, 14, UI.Card, delegate { StartTimer(minutes); })));
+            presets.Children.Add(Pad(UI.Button(Centered(UI.Text(m + " min", 12, expandedFg, FontWeights.SemiBold)), 56, 28, 14, UI.Card, delegate { StartTimer(minutes); })));
         }
         t.Children.Add(presets);
         var custom = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 8, 0, 0) };
-        custom.Children.Add(Pad(UI.Button(UI.Icon("", 11, UI.Fg), 28, 28, 14, UI.Card, delegate { customMinutes = Math.Max(1, customMinutes - (customMinutes > 10 ? 5 : 1)); RenderTimer(); })));
-        customLabel = UI.Text("15 min", 12.5, UI.Fg, FontWeights.SemiBold);
+        custom.Children.Add(Pad(UI.Button(UI.Icon("", 11, expandedFg), 28, 28, 14, UI.Card, delegate { customMinutes = Math.Max(1, customMinutes - (customMinutes > 10 ? 5 : 1)); RenderTimer(); })));
+        customLabel = UI.Text("15 min", 12.5, expandedFg, FontWeights.SemiBold);
         customLabel.Width = 52;
         customLabel.TextAlignment = TextAlignment.Center;
         custom.Children.Add(customLabel);
-        custom.Children.Add(Pad(UI.Button(UI.Icon("", 11, UI.Fg), 28, 28, 14, UI.Card, delegate { customMinutes = Math.Min(600, customMinutes + (customMinutes >= 10 ? 5 : 1)); RenderTimer(); })));
+        custom.Children.Add(Pad(UI.Button(UI.Icon("", 11, expandedFg), 28, 28, 14, UI.Card, delegate { customMinutes = Math.Min(600, customMinutes + (customMinutes >= 10 ? 5 : 1)); RenderTimer(); })));
         custom.Children.Add(Pad(UI.Button(Centered(UI.Text("Start", 12, UI.Fg, FontWeights.SemiBold)), 56, 28, 14, UI.Orange, delegate { StartTimer(customMinutes); })));
         t.Children.Add(custom);
         var tControls = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 8, 0, 0) };
-        timerPauseLabel = UI.Text("Pause", 12, UI.Fg, FontWeights.SemiBold);
+        timerPauseLabel = UI.Text("Pause", 12, expandedFg, FontWeights.SemiBold);
         tControls.Children.Add(Pad(UI.Button(Centered(UI.Text("Focus 25", 12, UI.Fg, FontWeights.SemiBold)), 78, 28, 14, UI.Purple, StartFocus)));
         tControls.Children.Add(Pad(UI.Button(Centered(timerPauseLabel), 72, 28, 14, UI.Card, PauseTimer)));
-        tControls.Children.Add(Pad(UI.Button(Centered(UI.Text("Cancel", 12, UI.Fg, FontWeights.SemiBold)), 72, 28, 14, UI.Card, CancelTimer)));
+        tControls.Children.Add(Pad(UI.Button(Centered(UI.Text("Cancel", 12, UI.Fg, FontWeights.SemiBold)), 72, 28, 14, UI.Red, CancelTimer)));
         t.Children.Add(tControls);
         page.Children.Add(UI.At(UI.Panel(t, new Thickness(8)), 0));
 
         var w = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-        w.Children.Add(Centered(UI.Text("Stopwatch", 12, UI.Dim, FontWeights.SemiBold)));
-        swText = UI.Text("0:00.0", 30, UI.Fg, FontWeights.Light);
+        w.Children.Add(Centered(UI.Text("Stopwatch", 12, expandedDim, FontWeights.SemiBold)));
+        swText = UI.Text("0:00.0", 30, expandedFg, FontWeights.Light);
         swText.HorizontalAlignment = HorizontalAlignment.Center;
         swText.FontFeatures();
         w.Children.Add(swText);
@@ -80,7 +80,7 @@ partial class Island
             UpdateTickRate();
             UpdateCollapsed();
         })));
-        wControls.Children.Add(Pad(UI.Button(Centered(UI.Text("Reset", 12, UI.Fg, FontWeights.SemiBold)), 66, 28, 14, UI.Card, delegate { stopwatch.Reset(); RenderTimer(); UpdateTickRate(); UpdateCollapsed(); })));
+        wControls.Children.Add(Pad(UI.Button(Centered(UI.Text("Reset", 12, expandedFg, FontWeights.SemiBold)), 66, 28, 14, UI.Card, delegate { stopwatch.Reset(); RenderTimer(); UpdateTickRate(); UpdateCollapsed(); })));
         w.Children.Add(wControls);
         page.Children.Add(UI.At(UI.Panel(w, new Thickness(8)), 2));
         return page;
@@ -132,7 +132,7 @@ partial class Island
     {
         if (!built) return;
         timerText.Text = timerRunning ? Format(TimerLeft()) : Format(TimeSpan.FromMinutes(customMinutes));
-        timerText.Foreground = timerRunning ? (focusMode ? UI.Purple : UI.Orange) : UI.Fg;
+        timerText.Foreground = timerRunning ? (focusMode ? UI.Purple : UI.Orange) : expandedFg;
         timerPauseLabel.Text = timerPaused ? "Resume" : "Pause";
         customLabel.Text = customMinutes + " min";
         var e = stopwatch.Elapsed;
@@ -161,7 +161,7 @@ partial class Island
         }
         if (mode == Mode.Expanded && tab == TabTimer) RenderTimer();
         if (mode == Mode.Expanded && tab == TabMedia) UpdateProgress();
-        if (mode == Mode.Collapsed && !hidden)
+        if (mode == Mode.Collapsed)
         {
             if (timerRunning) pillText.Text = Format(TimerLeft());
             else if (stopwatch.IsRunning) pillText.Text = Format(stopwatch.Elapsed);

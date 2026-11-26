@@ -65,11 +65,11 @@ partial class Island
         var g = new Grid();
         g.RowDefinitions.Add(new RowDefinition { Height = UI.Star });
         g.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        var badge = new Border { Width = 36, Height = 36, CornerRadius = new CornerRadius(18), Background = UI.B("#2EFFFFFF"), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, Child = UI.Icon(glyph, 15, UI.Fg) };
+        var badge = new Border { Width = 36, Height = 36, CornerRadius = new CornerRadius(18), Background = UI.B("#2EFFFFFF"), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, Child = UI.Icon(glyph, 15, expandedFg) };
         g.Children.Add(UI.Row(badge, 0));
         var words = new StackPanel();
-        words.Children.Add(UI.Text(label, 12.8, UI.Fg, FontWeights.SemiBold));
-        var state = UI.Text("Off", 11.2, UI.Dim, FontWeights.Normal);
+        words.Children.Add(UI.Text(label, 12.8, expandedFg, FontWeights.SemiBold));
+        var state = UI.Text("Off", 11.2, expandedDim, FontWeights.Normal);
         words.Children.Add(state);
         g.Children.Add(UI.Row(words, 1));
         var b = UI.Button(g, 0, 0, 22, UI.Card, click);
@@ -86,12 +86,12 @@ partial class Island
         parts.Item1.Background = state == 1 ? onColor : UI.B("#2EFFFFFF");
         parts.Item2.Text = state < 0 ? "Not available" : state == 1 ? "On" : "Off";
         tile.Background = state == 1 ? UI.B("#24FFFFFF") : UI.Card;
-        tile.Opacity = state < 0 ? 0.45 : 1;
+        tile.Opacity = state < 0 ? 0.55 : 1;
     }
 
     void SetVolumeGlyph(float level, bool muted)
     {
-        if (muteTile != null) SetTile(muteTile, muted ? 1 : 0, UI.Red);
+        if (muteTile != null) SetTile(muteTile, muted ? 1 : 0, UI.B("#60A5FA"));
         volSlider.Glyph.Text = muted ? "" : level < 0.01 ? "" : level < 0.34 ? "" : level < 0.67 ? "" : "";
     }
 }

@@ -54,7 +54,7 @@ partial class Island
         bool idle = Native.GetLastInputInfo(ref input) && (uint)Environment.TickCount - input.dwTime > 120000;
         var interval = TimeSpan.FromMilliseconds(idle ? 20000 : 3000);
         if (noteTimer.Interval != interval) noteTimer.Interval = interval;
-        if (listener == null || notePolling || hidden) return;
+        if (listener == null || notePolling) return;
 #if FRIENDS
         if (!WinUltra.App.Options.Notifications) return;
 #endif
@@ -72,7 +72,7 @@ partial class Island
             seenNotes = ids;
             int state;
             bool quiet = Native.SHQueryUserNotificationState(out state) == 0 && state != 5 && state != 7;    // busy, full screen or quiet time
-            if (newest != null && !quiet && !hidden && !focusMode) await ShowNotification(newest);    // Focus holds them back
+            if (newest != null && !quiet && !focusMode) await ShowNotification(newest);    // Focus holds them back
         }
         catch (Exception ex) { Store.Log("notification poll: " + ex.Message); }
         notePolling = false;

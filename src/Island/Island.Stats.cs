@@ -38,21 +38,21 @@ partial class Island
         cpuGraph = new Graph(Color.FromRgb(0x6F, 0x8C, 0xFF));
         gpuGraph = new Graph(Color.FromRgb(0xB9, 0x7C, 0xFF));
         netGraph = new Graph(Color.FromRgb(0x5E, 0xD0, 0xE0)) { AutoScale = true };
-        cpuValue = UI.Text("–", 20, UI.Fg, FontWeights.Light);
-        gpuValue = UI.Text("–", 20, UI.Fg, FontWeights.Light);
-        netDown = UI.Text("–", 14.4, UI.Fg, FontWeights.Normal);
+        cpuValue = UI.Text("–", 20, expandedFg, FontWeights.Light);
+        gpuValue = UI.Text("–", 20, expandedFg, FontWeights.Light);
+        netDown = UI.Text("–", 14.4, expandedFg, FontWeights.Normal);
         page.Children.Add(UI.At(GraphCard("CPU", cpuValue, null, cpuGraph), 0));
-        var gpuTemp = UI.Text("", 11.2, UI.Dim, FontWeights.SemiBold);
+        var gpuTemp = UI.Text("", 11.2, expandedDim, FontWeights.SemiBold);
         gpuValue.Tag = gpuTemp;
         page.Children.Add(UI.At(GraphCard("GPU", gpuValue, gpuTemp, gpuGraph), 2));
-        netUp = UI.Text("", 11.2, UI.Dim, FontWeights.Normal);
+        netUp = UI.Text("", 11.2, expandedDim, FontWeights.Normal);
         page.Children.Add(UI.At(GraphCard("Network", netDown, netUp, netGraph, true), 4));
 
         var b = new StackPanel { VerticalAlignment = VerticalAlignment.Top };
-        b.Children.Add(UI.Text("Battery", 12, UI.Dim, FontWeights.SemiBold));
-        battBig = UI.Text("–", 20, UI.Fg, FontWeights.Light);
+        b.Children.Add(UI.Text("Battery", 12, expandedDim, FontWeights.SemiBold));
+        battBig = UI.Text("–", 20, expandedFg, FontWeights.Light);
         b.Children.Add(battBig);
-        battStatus = UI.Text("", 12, UI.Dim, FontWeights.Normal);
+        battStatus = UI.Text("", 12, expandedDim, FontWeights.Normal);
         b.Children.Add(battStatus);
         var track = new Grid { Height = 8, Margin = new Thickness(0, 34, 0, 0) };
         track.Children.Add(new Border { Background = UI.B("#2EFFFFFF"), CornerRadius = new CornerRadius(4) });
@@ -73,7 +73,7 @@ partial class Island
         g.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         g.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         g.RowDefinitions.Add(new RowDefinition { Height = UI.Star });
-        g.Children.Add(UI.Row(UI.Text(label, 12, UI.Dim, FontWeights.SemiBold), 0));
+        g.Children.Add(UI.Row(UI.Text(label, 12, expandedDim, FontWeights.SemiBold), 0));
         if (extraBelow)
         {
             var stack = new StackPanel { Margin = new Thickness(0, 3, 0, 0) };
@@ -106,7 +106,7 @@ partial class Island
     {
         if (!built) return;
         batteryLabel.Text = batteryPercent < 0 ? "" : batteryPercent + "%" + (onAc ? "  ⚡" : "");
-        batteryLabel.Foreground = onAc ? UI.Green : (batteryPercent >= 0 && batteryPercent <= 20 ? UI.Red : UI.Dim);
+        batteryLabel.Foreground = onAc ? UI.Green : (batteryPercent >= 0 && batteryPercent <= 20 ? UI.Red : expandedDim);
         battBig.Text = batteryPercent < 0 ? "No battery" : batteryPercent + "%";
         battStatus.Text = !onAc ? "On battery" : charging ? "Charging" : "Plugged in";
         var color = batteryPercent >= 0 && batteryPercent <= 20 && !onAc ? UI.Red : UI.Green;

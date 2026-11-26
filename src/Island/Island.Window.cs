@@ -38,8 +38,9 @@ partial class Island
         int ex = Native.GetWindowLong(hwnd, -20);
         Native.SetWindowLong(hwnd, -20, ex | 0x08000000 | 0x80);    // WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW
         HwndSource.FromHwnd(hwnd).AddHook(WndProc);
-        if (!Native.RegisterHotKey(hwnd, 1, 0x0001 | 0x0002 | 0x4000, 0x20))    // Ctrl+Alt+Space, no repeat
-            Store.Log("hotkey: Ctrl+Alt+Space is already taken");
+        // Global toggle is handled by the Ctrl+Shift low-level keyboard hook.
+        // if (!Native.RegisterHotKey(hwnd, 1, 0x0002 | 0x0004 | 0x4000, 0x20))    // Ctrl+Shift+Space, no repeat
+        //     Store.Log("hotkey: Ctrl+Shift+Space is already taken");
         // The clipboard picker. Not Ctrl+Alt+V, which is Paste Special in Word.
         if (Native.RegisterHotKey(hwnd, 2, 0x0008 | 0x0004 | 0x4000, 0x56)) pickerKeys = "Win+Shift+V";
         else if (Native.RegisterHotKey(hwnd, 2, 0x0001 | 0x0002 | 0x0004 | 0x4000, 0x56)) pickerKeys = "Ctrl+Alt+Shift+V";
@@ -53,6 +54,12 @@ partial class Island
         fmtExclude = Native.RegisterClipboardFormat("ExcludeClipboardContentFromMonitorProcessing");
         fmtCanInclude = Native.RegisterClipboardFormat("CanIncludeInClipboardHistory");
         fmtViewerIgnore = Native.RegisterClipboardFormat("Clipboard Viewer Ignore");
+        dpiScale = 1.0;
+        try { dpiScale = HwndSource.FromHwnd(hwnd).CompositionTarget.TransformToDevice.M11; } catch (Exception) { }
+        TabIcons.DpiScale = dpiScale;
+        if (built) Ui(delegate { UpdateTabVisuals(); });
+        InstallWinEventHooks();
+        Reshape();
 #if FRIENDS
         if (WinUltra.App.Options.ClipboardHistory) Native.AddClipboardFormatListener(hwnd);
 #else
@@ -143,6 +150,9 @@ partial class Island
         {
             Native.UnregisterHotKey(hwnd, 1);
             Native.UnregisterHotKey(hwnd, 2);
+            if (keyboardHook != IntPtr.Zero) { try { Native.UnhookWindowsHookEx(keyboardHook); } catch (Exception) { } keyboardHook = IntPtr.Zero; }
+            if (winEventHookForeground != IntPtr.Zero) { try { Native.UnhookWinEvent(winEventHookForeground); } catch (Exception) { } winEventHookForeground = IntPtr.Zero; }
+            if (winEventHookLocation != IntPtr.Zero) { try { Native.UnhookWinEvent(winEventHookLocation); } catch (Exception) { } winEventHookLocation = IntPtr.Zero; }
             if (brightWatcher != null) brightWatcher.Stop();
             foreach (var bw in btWatchers) bw.Stop();
             Native.RemoveClipboardFormatListener(hwnd);
@@ -163,6 +173,7 @@ partial class Island
                 session = null;
             }
             if (sensorTimer != null) { sensorTimer.Dispose(); sensorTimer = null; }
+            TabIcons.Dispose();
             privacy.Dispose();
             lock (sensorGate) sensors.Dispose();
 #if !FRIENDS
@@ -215,8 +226,7 @@ partial class Island
 
     void OpenPinned(int tabIndex)
     {
-        forceShowUntil = DateTime.Now.AddSeconds(10);
-        if (hidden) { hidden = false; Show(); }
+        forceShowUntil = DateTime.Now.AddSeconds(5);
         Expand(true);
         if (tabIndex >= 0 && tabIndex < TabCount) SelectTab(tabIndex);
     }

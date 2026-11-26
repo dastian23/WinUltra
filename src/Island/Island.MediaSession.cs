@@ -133,7 +133,7 @@ partial class Island
                     }
                     if (version != mediaVersion) return;
                     mediaKey = key;
-                    try { SetTint(art != null ? AverageColor((BitmapSource)art) : Color.FromRgb(0x4A, 0x6C, 0xFF)); } catch (Exception) { }
+                    try { SetTint(Color.FromRgb(0x00, 0x00, 0x00)); } catch (Exception) { }
                 }
                 appName = PrettyApp(s.SourceAppUserModelId);
                 newAppId = s.SourceAppUserModelId;
@@ -152,6 +152,14 @@ partial class Island
         playing = isPlaying;
         title = newTitle;
         artist = newArtist;
+        if (playing)
+        {
+            if (micApps.Count > 0) { micLevelTimer.Stop(); ResetMicLevel(); }
+        }
+        else if (micApps.Count > 0 && !micLevelTimer.IsEnabled)
+        {
+            micLevelTimer.Start();
+        }
         UpdateMediaUi();
         UpdateCollapsed();
         UpdateTickRate();

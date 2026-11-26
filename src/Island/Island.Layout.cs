@@ -69,6 +69,7 @@ partial class Island
     {
         if (Math.Abs(Width - w) > 0.5) { Width = w; Left = (SystemParameters.PrimaryScreenWidth - w) / 2; }
         if (Math.Abs(Height - h) > 0.5) Height = h;
+        Reshape();
     }
 
     void Reshape()
@@ -85,6 +86,21 @@ partial class Island
         // The camera/mic dot rides just right of the island, like the iPhone's.
         privacyShift.X = w / 2 + 14;
         privacyDot.Margin = new Thickness(0, Gap + h / 2 - 6, 0, 0);
+
+        if (hwnd != IntPtr.Zero && island.ActualWidth > 0 && island.ActualHeight > 0)
+        {
+            int rw = (int)Math.Round(island.ActualWidth * dpiScale);
+            int rh = (int)Math.Round(island.ActualHeight * dpiScale);
+            int rx = (int)Math.Round((Width - island.ActualWidth) / 2 * dpiScale);
+            int ry = (int)Math.Round(Gap * dpiScale);
+            int radius = (int)Math.Round(Math.Min(island.ActualHeight / 2, 28) * dpiScale);
+            if (rx != lastRegionX || ry != lastRegionY || rw != lastRegionW || rh != lastRegionH || radius != lastRegionRadius)
+            {
+                lastRegionX = rx; lastRegionY = ry; lastRegionW = rw; lastRegionH = rh; lastRegionRadius = radius;
+                IntPtr region = Native.CreateRoundRectRgn(rx, ry, rx + rw, ry + rh, Math.Max(1, radius * 2), Math.Max(1, radius * 2));
+                if (region != IntPtr.Zero) Native.SetWindowRgn(hwnd, region, true);
+            }
+        }
     }
 
     // The solid base hides under the glass, unless frosted glass is switched off.

@@ -39,8 +39,8 @@ partial class Island
         page.RowDefinitions.Add(new RowDefinition { Height = UI.Star });
         var head = UI.Columns(UI.Auto, UI.Star);
         head.Margin = new Thickness(4, 0, 0, 8);
-        head.Children.Add(UI.At(UI.Text("Shelf", 13, UI.Fg, FontWeights.SemiBold), 0));
-        var hint = UI.Text("Drag a file out to use it. Pin files, folders or apps to keep them as launchers.", 12, UI.Dim, FontWeights.Normal);
+        head.Children.Add(UI.At(UI.Text("Shelf", 13, expandedFg, FontWeights.SemiBold), 0));
+        var hint = UI.Text("Drag a file out to use it. Pin files, folders or apps to keep them as launchers.", 12, expandedDim, FontWeights.Normal);
         hint.Margin = new Thickness(10, 0, 0, 0);
         head.Children.Add(UI.At(hint, 1));
         page.Children.Add(UI.Row(head, 0));
@@ -100,8 +100,8 @@ partial class Island
                 BorderBrush = new SolidColorBrush(Color.FromArgb(0x44, 255, 255, 255)), Background = UI.Card,
             };
             var s = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-            s.Children.Add(UI.Icon("", 28, UI.Dim));
-            var t = UI.Text("Drop files, folders or apps here", 14, UI.Dim, FontWeights.SemiBold);
+            s.Children.Add(UI.Icon("", 28, expandedDim));
+            var t = UI.Text("Drop files, folders or apps here", 14, expandedDim, FontWeights.SemiBold);
             t.HorizontalAlignment = HorizontalAlignment.Center;
             t.Margin = new Thickness(0, 8, 0, 0);
             s.Children.Add(t);

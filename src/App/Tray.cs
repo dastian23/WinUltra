@@ -22,7 +22,7 @@ namespace WinUltra
         void BuildMenu()
         {
             var menu = new System.Windows.Forms.ContextMenuStrip();
-            var open = new System.Windows.Forms.ToolStripMenuItem("Open island", null, delegate { App.OpenIsland(); }) { ShortcutKeyDisplayString = "Ctrl+Alt+Space" };
+            var open = new System.Windows.Forms.ToolStripMenuItem("Open island", null, delegate { App.OpenIsland(); }) { ShortcutKeyDisplayString = "Ctrl+Shift" };
             var clip =new System.Windows.Forms.ToolStripMenuItem("Clipboard history", null, delegate { App.SetClipboardHistory(!App.Options.ClipboardHistory); });
             var notes = new System.Windows.Forms.ToolStripMenuItem("Notification pop-ups", null, delegate { App.SetNotifications(!App.Options.Notifications); });
             var glass = new System.Windows.Forms.ToolStripMenuItem("Frosted glass", null, delegate { App.SetFrostedGlass(!App.Options.FrostedGlass); });
@@ -52,7 +52,7 @@ namespace WinUltra
             icon.ContextMenuStrip = menu;
 #else
             var menu = new System.Windows.Forms.ContextMenuStrip();
-            var open = new System.Windows.Forms.ToolStripMenuItem("Open island", null, delegate { App.OpenIsland(); }) { ShortcutKeyDisplayString = "Ctrl+Alt+Space" };
+            var open = new System.Windows.Forms.ToolStripMenuItem("Open island", null, delegate { App.OpenIsland(); }) { ShortcutKeyDisplayString = "Ctrl+Shift" };
             var startup = new System.Windows.Forms.ToolStripMenuItem("Start with Windows", null, delegate { App.SetStartup(!App.StartsWithWindows); });
             menu.Items.Add(open);
             menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());

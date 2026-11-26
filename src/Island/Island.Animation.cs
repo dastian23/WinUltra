@@ -54,6 +54,7 @@ partial class Island
             island.BeginAnimation(HeightProperty, null);
             island.Width = w;
             island.Height = h;
+            Reshape();
             if (done != null) done();
         };
         island.BeginAnimation(WidthProperty, aw);
@@ -113,8 +114,11 @@ partial class Island
         FadeTo(lineGlow, 0, 160);
         FadeTo(rimOverlay, 1, 300);
         FadeTo(glass, 1, 320);
+        FadeTo(expandedFill, 1, 320);
         FadeTo(baseLayer, BaseUnderGlass, 320);
-        FadeTo(aurora, 0.6, 500);
+        FadeTo(aurora, 0.25, 500);
+        FadeTo(contentTint, 0, 200);
+        FadeTo(contentTint, 0, 200);
         ShowLayer(expandedLayer, 110);
         AnimateTo(ExpW, ExpH, true, null);
         StartLive();
@@ -136,6 +140,7 @@ partial class Island
         pickerMode = false;
         StopLive();
         HideLayer(expandedLayer);
+        FadeTo(expandedFill, 0, 200);
         ApplyCollapsed(true);
     }
 
@@ -153,8 +158,6 @@ partial class Island
     void ShowPopup(UIElement content, double w, double h, int ms, bool force)
     {
         if (mode == Mode.Expanded) return;
-        if (hidden && !force) return;
-        if (force && hidden) { hidden = false; forceShowUntil = DateTime.Now.AddMilliseconds(ms + 500); Show(); }
         if (popupLayer.Children.Count != 1 || popupLayer.Children[0] != content)
         {
             popupLayer.Children.Clear();
@@ -173,6 +176,7 @@ partial class Island
         {
             StopBars();
             HideLayer(collapsedLayer);
+            FadeTo(expandedFill, 0, 160);
             FadeTo(lineGlow, 0, 140);
             FadeTo(rimOverlay, 1, 260);
             FadeTo(glass, 1, 260);

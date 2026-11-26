@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- WinUltra: runs with normal user rights only, declares Windows 10/11 and per-monitor DPI awareness. -->
 <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
-  <assemblyIdentity version="1.1.1.0" name="WinUltra.app" type="win32" />
+  <assemblyIdentity version="1.2.0.0" name="WinUltra.app" type="win32" />
   <description>WinUltra: a Dynamic Island and pop-ups for Windows 11</description>
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
     <security>

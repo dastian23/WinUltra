@@ -35,25 +35,39 @@ partial class Island
     {
         if (mode != Mode.Collapsed) return;
         bool active = HasStatus();
+        bool line = windowPresent && !active;
+        bool readable = playing || timerRunning || micApps.Count > 0;
         lastPillActive = active;
-        hitStrip.Visibility = Visibility.Collapsed;
-        double w = active ? PillW : IdlePillW, h = PillH;
+        hitStrip.Visibility = line ? Visibility.Visible : Visibility.Collapsed;
+        double w = line ? LineW : (active ? PillW : IdlePillW), h = line ? LineH : PillH;
         FadeTo(glass, 0, 300);    // the resting pill is solid black, like the iPhone's
         FadeTo(baseLayer, 1, 200);
-        FadeTo(lineGlow, 0, 160);
-        FadeTo(rimOverlay, 1, 300);
-        FadeTo(aurora, active ? 0.55 : 0.35, 400);
-        ShowLayer(collapsedLayer, 140);
-        if (active && playing && micApps.Count == 0 && !timerRunning && !stopwatch.IsRunning && !hidden) StartBars();
-        else StopBars();
+        if (line)
+        {
+            HideLayer(collapsedLayer);
+            StopBars();
+            FadeTo(lineGlow, 0.9, 260);
+            FadeTo(rimOverlay, 0, 200);
+            FadeTo(aurora, 0, 260);
+            FadeTo(contentTint, 0, 160);
+        }
+        else
+        {
+            FadeTo(lineGlow, 0, 160);
+            FadeTo(rimOverlay, 1, 300);
+            FadeTo(aurora, active ? 0.55 : 0.35, 400);
+            ShowLayer(collapsedLayer, 140);
+            if (active && playing && !timerRunning && !stopwatch.IsRunning) StartBars();
+            else StopBars();
+            FadeTo(contentTint, readable ? 0.3 : 0, 200);
+        }
         Action done = delegate
         {
-            // At rest the window hugs the pill, so the music bars redraw a small area.
-            if (mode == Mode.Collapsed) Resize(w + 84, PillH + Gap + 14);
+            if (mode == Mode.Collapsed) Resize(w + 84, h + Gap + 14);
             trimTimer.Stop();
             trimTimer.Start();
         };
-        if (!animate) { island.Width = w; island.Height = h; done(); return; }
+        if (!animate) { island.Width = w; island.Height = h; lineGlow.Opacity = line ? 0.9 : 0; done(); return; }
         Resize(Math.Max(Width, w + 30), Math.Max(Height, h + Gap + 12));    // room for the spring's overshoot
         if (Math.Abs(island.ActualWidth - w) > 0.5 || Math.Abs(island.ActualHeight - h) > 0.5) AnimateTo(w, h, false, done);
         else done();
@@ -109,7 +123,7 @@ partial class Island
         int minute = DateTime.Now.Minute;
         if (minute == clockMinute) return;
         clockMinute = minute;
-        if (mode == Mode.Collapsed && !hidden && !HasStatus()) pillText.Text = DateTime.Now.ToString("HH:mm");
+        if (mode == Mode.Collapsed && !HasStatus()) pillText.Text = DateTime.Now.ToString("HH:mm");
         int msToNextMinute = 60000 - (DateTime.Now.Second * 1000 + DateTime.Now.Millisecond);
         if (msToNextMinute < 100) msToNextMinute += 60000;
         if (clockTimer.Interval.TotalMilliseconds != msToNextMinute)
@@ -169,6 +183,7 @@ partial class Island
         pillBars.Visibility = Visibility.Collapsed;
         pillMicBars.Visibility = Visibility.Collapsed;
         pillText.FontSize = 14;
+        pillText.Effect = null;
         ShowMic();
 
         if (timerRunning)
@@ -176,6 +191,7 @@ partial class Island
             var tone = focusMode ? UI.Purple : UI.Orange;
             pillIcon.Text = focusMode ? "\uE708" : ClockGlyph; pillIcon.Foreground = tone; pillIcon.Visibility = Visibility.Visible;
             pillText.Text = Format(TimerLeft()); pillText.Foreground = tone; pillText.Visibility = Visibility.Visible;
+            pillText.Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 2, ShadowDepth = 1, Opacity = 0.7, Color = Colors.Black };
         }
         else if (stopwatch.IsRunning)
         {
@@ -188,7 +204,9 @@ partial class Island
             pillText.Text = title ?? appName ?? "";
             pillText.Foreground = UI.Fg;
             pillText.Visibility = Visibility.Visible;
-            pillBars.Visibility = micApps.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+            pillText.Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 2, ShadowDepth = 1, Opacity = 0.7, Color = Colors.Black };
+            pillBars.Visibility = Visibility.Visible;
+            pillMicBars.Visibility = Visibility.Collapsed;
         }
         else if (micApps.Count > 0)
         {
@@ -218,7 +236,7 @@ partial class Island
         pillBadge.Visibility = pillIcon.Visibility;
         pillLeft.Visibility = pillArt.Visibility == Visibility.Visible || pillIcon.Visibility == Visibility.Visible
             ? Visibility.Visible : Visibility.Collapsed;
-        if (!playing || timerRunning || stopwatch.IsRunning || micApps.Count > 0) StopBars();
+        if (!playing || timerRunning || stopwatch.IsRunning) StopBars();
         bool active = HasStatus();
         if (mode == Mode.Collapsed && (active != wasActive || (playing && !barsRunning && !timerRunning && !stopwatch.IsRunning))) ApplyCollapsed(true);
         lastPillActive = active;

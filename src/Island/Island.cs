@@ -64,10 +64,10 @@ partial class Island
         baseLayer.IsHitTestVisible = false;
         island.Background = Brushes.Transparent;
         var rim = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(1, 1) };
-        rim.GradientStops.Add(new GradientStop(Color.FromArgb(0x9A, 255, 255, 255), 0));
-        rim.GradientStops.Add(new GradientStop(Color.FromArgb(0x18, 255, 255, 255), 0.45));
-        rim.GradientStops.Add(new GradientStop(Color.FromArgb(0x10, 255, 255, 255), 0.7));
-        rim.GradientStops.Add(new GradientStop(Color.FromArgb(0x55, 255, 255, 255), 1));
+        rim.GradientStops.Add(new GradientStop(Color.FromArgb(0x26, 255, 255, 255), 0));
+        rim.GradientStops.Add(new GradientStop(Color.FromArgb(0x14, 255, 255, 255), 0.45));
+        rim.GradientStops.Add(new GradientStop(Color.FromArgb(0x14, 255, 255, 255), 0.7));
+        rim.GradientStops.Add(new GradientStop(Color.FromArgb(0x1F, 255, 255, 255), 1));
         // The bright rim is drawn just inside the shape: on the edge itself the rounded clip
         // cut it in half along the curves, which made the corners look stepped.
         rimOverlay.BorderBrush = rim;
@@ -86,17 +86,15 @@ partial class Island
         island.SizeChanged += delegate { Reshape(); };
 
         auroraA = Glow(tint);
-        auroraB = Glow(Color.FromRgb(0xB0, 0x4B, 0xFF));
         aurora.Children.Add(new Border { Width = 360, Height = 240, Background = auroraA, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(-120, -110, 0, 0) });
-        aurora.Children.Add(new Border { Width = 380, Height = 260, Background = auroraB, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, -150, -140) });
         aurora.Opacity = 0;
         aurora.IsHitTestVisible = false;
 
-        // The idle state: a thin line with a soft blue-violet-pink sheen.
+        // The idle state: a thin line with a soft white sheen.
         var lineBrush = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(1, 0) };
-        lineBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0x6F, 0x8C, 0xFF), 0));
-        lineBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0xB9, 0x7C, 0xFF), 0.5));
-        lineBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0xFF, 0x8F, 0xCF), 1));
+        lineBrush.GradientStops.Add(new GradientStop(Color.FromArgb(0xCC, 255, 255, 255), 0));
+        lineBrush.GradientStops.Add(new GradientStop(Color.FromArgb(0x99, 255, 255, 255), 0.5));
+        lineBrush.GradientStops.Add(new GradientStop(Color.FromArgb(0xCC, 255, 255, 255), 1));
         lineBrush.Freeze();
         lineGlow.Background = lineBrush;
         lineGlow.Opacity = 0;
@@ -110,6 +108,8 @@ partial class Island
         layers.Children.Add(glass);
         layers.Children.Add(aurora);
         layers.Children.Add(sheen);
+        layers.Children.Add(expandedFill);
+        layers.Children.Add(contentTint);
         layers.Children.Add(lineGlow);
         layers.Children.Add(collapsedLayer);
         layers.Children.Add(popupLayer);
@@ -129,11 +129,12 @@ partial class Island
         privacyTransform.Children.Add(privacyShift);
         privacyDot.RenderTransform = privacyTransform;
         root.Children.Add(privacyDot);
+        root.Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0));
         root.AllowDrop = true;
         Content = root;
 
-        hoverTimer = MakeTimer(120, delegate { hoverTimer.Stop(); Expand(false); });
-        leaveTimer = MakeTimer(380, delegate { leaveTimer.Stop(); MaybeCollapse(); });
+        hoverTimer = MakeTimer(200, delegate { hoverTimer.Stop(); if (mode != Mode.Expanded) Expand(false); });
+        leaveTimer = MakeTimer(250, delegate { leaveTimer.Stop(); MaybeCollapse(); });
         popupTimer = MakeTimer(2000, delegate { popupTimer.Stop(); EndPopup(); });
         pollTimer = MakeTimer(1500, delegate { Poll(); });
         tickTimer = MakeTimer(1000, delegate { Tick(); });
@@ -145,6 +146,7 @@ partial class Island
         clockTimer.Start();
         micLevelTimer = MakeTimer(60, delegate { UpdateMicLevel(); });
 
+        TabIcons.Load();
         BuildCollapsed();
         foreach (var layer in new[] { collapsedLayer, popupLayer, expandedLayer })
         {
@@ -158,6 +160,7 @@ partial class Island
         {
             leaveTimer.Stop();
             pinnedOpen = false;
+            hoverTimer.Stop();
             if (mode != Mode.Expanded) hoverTimer.Start();
         };
         root.MouseLeave += delegate
@@ -165,7 +168,7 @@ partial class Island
             hoverTimer.Stop();
             if (mode == Mode.Expanded) leaveTimer.Start();
         };
-        root.MouseLeftButtonUp += delegate { if (mode != Mode.Expanded) Expand(false); };
+        root.MouseLeftButtonUp += delegate { if (mode != Mode.Expanded) { hoverTimer.Stop(); Expand(false); } };
         root.DragEnter += OnDragOver;
         root.DragOver += OnDragOver;
         root.DragLeave += delegate { dragInside = false; if (dragPreviousTab >= 0) { int previous = dragPreviousTab; dragPreviousTab = -1; if (tab == TabShelf) SelectTab(previous); } leaveTimer.Stop(); leaveTimer.Start(); };

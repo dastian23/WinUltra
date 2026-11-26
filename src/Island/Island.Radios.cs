@@ -54,7 +54,7 @@ partial class Island
     {
         if (!built) return;
         SetTile(wifiTile, wifi == null ? -1 : wifi.State == RadioState.On ? 1 : 0, UI.Blue);
-        SetTile(btTile, bluetooth == null ? -1 : bluetooth.State == RadioState.On ? 1 : 0, UI.Blue);
+        SetTile(btTile, bluetooth == null ? -1 : bluetooth.State == RadioState.On ? 1 : 0, UI.B("#60A5FA"));
     }
 
     async void ToggleRadio(Radio r)
@@ -73,6 +73,6 @@ partial class Island
             try { Process.Start("ms-settings:nightlight"); } catch (Exception) { }
             return;
         }
-        SetTile(nightTile, state == 0 ? 1 : 0, UI.Orange);
+        SetTile(nightTile, state == 0 ? 1 : 0, UI.B("#60A5FA"));
     }
 }

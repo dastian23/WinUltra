@@ -48,13 +48,14 @@ partial class Island
         var bar = UI.Columns(UI.Star, UI.Auto);
         var tabs = new StackPanel { Orientation = Orientation.Horizontal };
         string[] names = { "Media", "Controls", "Stats", "Clipboard", "Shelf", "Timer" };
-        string[] glyphs = { "", "", "", "", "", ClockGlyph };
         for (int i = 0; i < TabCount; i++)
         {
             int index = i;
             var content = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(11, 0, 11, 0), VerticalAlignment = VerticalAlignment.Center };
-            content.Children.Add(UI.Icon(glyphs[i], 13, UI.Fg));
-            tabLabels[i] = UI.Text(names[i], 12.5, UI.Fg, FontWeights.SemiBold);
+            tabIcons[i] = new Image { Width = TabIcons.TabIconSize, Height = TabIcons.TabIconSize, Source = TabIcons.Get((TabIcon)i, false), Stretch = Stretch.Uniform };
+            RenderOptions.SetBitmapScalingMode(tabIcons[i], BitmapScalingMode.HighQuality);
+            content.Children.Add(tabIcons[i]);
+            tabLabels[i] = UI.Text(names[i], 12.5, expandedFg, FontWeights.SemiBold);
             tabLabels[i].Margin = new Thickness(7, 0, 0, 0);
             content.Children.Add(tabLabels[i]);
             tabButtons[i] = UI.Button(content, 0, 28, 14, Brushes.Transparent, delegate { SelectTab(index, true); });
@@ -69,7 +70,7 @@ partial class Island
         privacyLabel.HorizontalAlignment = HorizontalAlignment.Right;
         privacyLabel.MaxWidth = 150;
         bar.Children.Add(UI.At(privacyLabel, 0));
-        batteryLabel = UI.Text("", 12.5, UI.Dim, FontWeights.SemiBold);
+        batteryLabel = UI.Text("", 12.5, expandedDim, FontWeights.SemiBold);
         batteryLabel.Margin = new Thickness(0, 0, 4, 0);
         bar.Children.Add(UI.At(batteryLabel, 1));
         panel.Children.Add(UI.Row(bar, 0));
@@ -123,10 +124,12 @@ partial class Island
         for (int i = 0; i < TabCount; i++)
         {
             bool selected = i == tab;
-            tabButtons[i].Background = selected ? UI.GlassFill(Color.FromRgb(0x8A, 0x8A, 0x9A), 0x40)
+            tabButtons[i].Background = selected ? UI.B("#403F40")
                 : (i == hoveredTab ? UI.Selected : Brushes.Transparent);
             tabButtons[i].BorderBrush = selected ? UI.Specular : null;
             tabButtons[i].BorderThickness = new Thickness(selected ? 1 : 0);
+            if (tabIcons[i] != null) tabIcons[i].Source = TabIcons.Get((TabIcon)i, selected);
+            tabLabels[i].Foreground = selected ? UI.Fg : expandedFg;
             tabLabels[i].Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
             pages[i].Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
         }

@@ -63,7 +63,7 @@ static class Backdrop
         sh = small.PixelHeight;
         var px = new byte[sw * sh * 4];
         small.CopyPixels(px, sw * 4, 0);
-        for (int pass = 0; pass < 3; pass++) BoxBlur(px, sw, sh, 2);
+        for (int pass = 0; pass < 3; pass++) BoxBlur(px, sw, sh, 3);
         for (int i = 0; i < px.Length; i += 4)
         {
             double b = px[i], g = px[i + 1], r = px[i + 2], l = 0.299 * r + 0.587 * g + 0.114 * b;

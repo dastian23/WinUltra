@@ -163,7 +163,7 @@ static class UI
 
     public static Border Panel(UIElement child, Thickness padding)
     {
-        return new Border { Child = child, Background = Card, BorderBrush = Rim, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(20), Padding = padding };
+        return new Border { Child = child, Background = new SolidColorBrush(Color.FromArgb(0x1A, 255, 255, 255)), BorderBrush = B("#26FFFFFF"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(20), Padding = padding };
     }
 
     public static Grid Columns(params GridLength[] widths)

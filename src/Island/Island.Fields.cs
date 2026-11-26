@@ -31,7 +31,7 @@ using RadioState = Windows.Devices.Radios.RadioState;
 partial class Island : Window
 {
     // Sizes are in WPF units; WPF scales them for the monitor's DPI.
-    const double IdlePillW = 240, PillW = 360, PillH = 34, PopW = 340, PopH = 44, NoteW = 392, NoteH = 62;
+    const double LineW = 200, LineH = 8, IdlePillW = 240, PillW = 360, PillH = 34, PopW = 340, PopH = 44, NoteW = 392, NoteH = 62;
     const double ExpW = 520, ExpH = 262, WinW = 580, Gap = 5, SmallWinH = 84, BigWinH = ExpH + 40;
     const int TabMedia = 0, TabControls = 1, TabStats = 2, TabClipboard = 3, TabShelf = 4, TabTimer = 5, TabCount = 6;
     // Build.cmd makes three files that differ only in this number: WinUltra.exe (120 fps, the standard
@@ -62,19 +62,34 @@ partial class Island : Window
     readonly Grid aurora = new Grid();
     readonly Border rimOverlay = new Border();
     readonly Border baseLayer = new Border();
+    const byte ExpandedFillAlpha = 0x28;
+    static readonly Color ExpandedFillColor = Color.FromRgb(0x0A, 0x0A, 0x0A);
+    const byte TabSelectedFillAlpha = 0x1F;
+    const byte TabSelectedBorderAlpha = 0x2E;
+    static readonly Color TabUnselectedColor = Color.FromRgb(0xA1, 0xA1, 0xAA);
+    readonly Border expandedFill = new Border { Background = new SolidColorBrush(Color.FromArgb(ExpandedFillAlpha, ExpandedFillColor.R, ExpandedFillColor.G, ExpandedFillColor.B)), IsHitTestVisible = false, Opacity = 0 };
+    readonly Border contentTint = new Border { Background = new SolidColorBrush(Color.FromArgb(0xCC, 0, 0, 0)), IsHitTestVisible = false, Opacity = 0 };
+    readonly Brush expandedFg = UI.B("#F9FAFB");
+    readonly Brush expandedDim = UI.B("#C7CCD6");
     readonly Border pillBadge = UI.GlassBadge(24, 12);
     readonly Grid glass = new Grid();
     readonly ImageBrush glassBrush = new ImageBrush { Stretch = Stretch.Fill, ViewportUnits = BrushMappingMode.Absolute };
-    readonly RadialGradientBrush auroraA, auroraB;
+    readonly RadialGradientBrush auroraA;
     readonly RectangleGeometry clip = new RectangleGeometry();
     readonly Grid collapsedLayer = new Grid(), popupLayer = new Grid(), expandedLayer = new Grid();
     bool built;
     DispatcherTimer hoverTimer, leaveTimer, popupTimer, pollTimer, tickTimer, trimTimer, clipTimer, noteTimer, clockTimer, micLevelTimer;
     int hoveredTab = -1, lastSelectedTab = -1, clockMinute = -1;
     System.Threading.Timer sensorTimer;
-    bool pinnedOpen, dragInside, draggingOut, hidden, lastPillActive;
+    bool pinnedOpen, dragInside, draggingOut, lastPillActive, seeThrough, windowPresent;
     DateTime pinnedAt, forceShowUntil, ignoreClipUntil;
     int clipAttempts;
+    IntPtr winEventHookForeground, winEventHookLocation, keyboardHook;
+    Native.LowLevelKeyboardProc keyboardHookProc;
+    Native.WinEventProc winEventProc;
+    double dpiScale = 1.0;
+    bool ctrlKeyDown, shiftKeyDown, ctrlShiftArmed, ctrlShiftUsed;
+    int lastRegionX = int.MinValue, lastRegionY, lastRegionW, lastRegionH, lastRegionRadius;
 
     // collapsed status
     readonly Border pillArt = new Border { Width = 22, Height = 22, CornerRadius = new CornerRadius(6) };
@@ -90,6 +105,7 @@ partial class Island : Window
     // tabs
     readonly Border[] tabButtons = new Border[TabCount];
     readonly TextBlock[] tabLabels = new TextBlock[TabCount];
+    readonly Image[] tabIcons = new Image[TabCount];
     readonly Grid[] pages = new Grid[TabCount];
     int tab;
     TextBlock batteryLabel;
@@ -99,6 +115,11 @@ partial class Island : Window
     TextBlock mediaApp, mediaTitle, mediaArtist, playGlyph, posText, durText;
     Grid progressRow;
     Border progressFill;
+    Grid progressTrack;
+    System.Windows.Shapes.Ellipse progressThumb;
+    TranslateTransform progressThumbShift;
+    bool progressDragging;
+    double lastProgressWidth = -1;
 
     // controls page
     Border wifiTile, btTile, nightTile, muteTile;

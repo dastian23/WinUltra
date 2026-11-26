@@ -39,11 +39,11 @@ partial class Island
         page.RowDefinitions.Add(new RowDefinition { Height = UI.Star });
         var head = UI.Columns(UI.Auto, UI.Star, UI.Auto);
         head.Margin = new Thickness(4, 0, 0, 8);
-        head.Children.Add(UI.At(UI.Text("Recently copied", 13, UI.Fg, FontWeights.SemiBold), 0));
-        clipCount = UI.Text("", 12, UI.Dim, FontWeights.Normal);
+        head.Children.Add(UI.At(UI.Text("Recently copied", 13, expandedFg, FontWeights.SemiBold), 0));
+        clipCount = UI.Text("", 12, expandedDim, FontWeights.Normal);
         clipCount.Margin = new Thickness(8, 0, 0, 0);
         head.Children.Add(UI.At(clipCount, 1));
-        var clear = UI.Text("Clear unpinned", 12, UI.Fg, FontWeights.SemiBold);
+        var clear = UI.Text("Clear unpinned", 12, expandedFg, FontWeights.SemiBold);
         clear.Margin = new Thickness(10, 0, 10, 0);
         head.Children.Add(UI.At(UI.Button(clear, 0, 26, 13, UI.Card, delegate { clips.RemoveAll(c => !c.Pinned); RenderClips(); }), 2));
         page.Children.Add(UI.Row(head, 0));

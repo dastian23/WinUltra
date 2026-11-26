@@ -95,7 +95,7 @@ partial class Island
             p.Value.Text = started;
             ShowPopup(p.Root, PopW, PopH, 2600, false);
         }
-        if (micApps.Count > 0)
+        if (micApps.Count > 0 && !playing)
         {
             if (!micLevelTimer.IsEnabled) micLevelTimer.Start();
         }
@@ -214,9 +214,9 @@ partial class Island
     void ShowCapsLock()
     {
         bool on = (Native.GetKeyState(0x14) & 1) != 0;
-        var p = MakePopup("", on ? UI.Orange : UI.Dim, "Caps Lock", false);
+        var p = MakePopup("", on ? UI.B("#22D3EE") : UI.Dim, "Caps Lock", false);
         p.Value.Text = on ? "On" : "Off";
-        p.Value.Foreground = on ? UI.Orange : UI.Dim;
+        p.Value.Foreground = on ? UI.B("#22D3EE") : UI.Dim;
         ShowPopup(p.Root, 250, PopH, 1400, false);
     }
 }
